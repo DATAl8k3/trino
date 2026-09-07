@@ -13,33 +13,80 @@
  */
 package io.trino.server.ui;
 
-import com.google.inject.Binder;
-import com.google.inject.Scopes;
-import io.airlift.configuration.AbstractConfigurationAwareModule;
+import io.airlift.configuration.Config;
 
-import static io.airlift.configuration.ConfigBinder.configBinder;
-import static io.airlift.jaxrs.JaxrsBinder.jaxrsBinder;
-
-public class WebUiModule
-        extends AbstractConfigurationAwareModule
+public class WebUiConfig
 {
-    @Override
-    protected void setup(Binder binder)
+    private boolean enabled = true;
+    private boolean previewEnabled = true;
+    private boolean legacyEnabled;
+    private String historyServerUrl;
+    private String historyQueryPath;
+
+    public boolean isEnabled()
     {
-        jaxrsBinder(binder).bind(WebUiStaticResource.class);
-        jaxrsBinder(binder).bind(WebUiLegacyStaticResource.class);
+        return enabled;
+    }
 
-        configBinder(binder).bindConfig(WebUiConfig.class);
+    @Deprecated
+    public boolean isPreviewEnabled()
+    {
+        return previewEnabled;
+    }
 
-        if (buildConfigObject(WebUiConfig.class).isEnabled()) {
-            install(new WebUiFrontendModule());
-            install(new WebUiLegacyAuthenticationModule());
-            jaxrsBinder(binder).bind(ClusterResource.class);
-            jaxrsBinder(binder).bind(ClusterStatsResource.class);
-            jaxrsBinder(binder).bind(UiQueryResource.class);
-        }
-        else {
-            binder.bind(WebUiAuthenticationFilter.class).to(DisabledWebUiAuthenticationFilter.class).in(Scopes.SINGLETON);
-        }
+    public boolean isLegacyEnabled()
+    {
+        return legacyEnabled;
+    }
+
+    public boolean isLegacyUiAvailable()
+    {
+        return legacyEnabled || !previewEnabled;
+    }
+
+    public String getHistoryServerUrl()
+    {
+        return historyServerUrl;
+    }
+
+    public String getHistoryQueryPath()
+    {
+        return historyQueryPath;
+    }
+
+    @Config("web-ui.enabled")
+    public WebUiConfig setEnabled(boolean enabled)
+    {
+        this.enabled = enabled;
+        return this;
+    }
+
+    @Deprecated
+    @Config("web-ui.preview.enabled")
+    public WebUiConfig setPreviewEnabled(boolean previewEnabled)
+    {
+        this.previewEnabled = previewEnabled;
+        return this;
+    }
+
+    @Config("web-ui.legacy.enabled")
+    public WebUiConfig setLegacyEnabled(boolean legacyEnabled)
+    {
+        this.legacyEnabled = legacyEnabled;
+        return this;
+    }
+
+    @Config("web-ui.history-server.url")
+    public WebUiConfig setHistoryServerUrl(String historyServerUrl)
+    {
+        this.historyServerUrl = historyServerUrl;
+        return this;
+    }
+
+    @Config("web-ui.history-server.query-path")
+    public WebUiConfig setHistoryQueryPath(String historyQueryPath)
+    {
+        this.historyQueryPath = historyQueryPath;
+        return this;
     }
 }
